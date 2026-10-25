@@ -1,3 +1,4 @@
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
 import { useEffect, useState } from 'react'
 
 export type ThemeChoice = 'system' | 'light' | 'dark'
@@ -18,7 +19,10 @@ const resolve = (choice: ThemeChoice): 'light' | 'dark' =>
 
 /** Sets the colours on <html>. Called before the first render too, so the app doesn't flash the wrong theme. */
 export function applyTheme(choice: ThemeChoice) {
-  document.documentElement.dataset.theme = resolve(choice)
+  const theme = resolve(choice)
+  document.documentElement.dataset.theme = theme
+  // In the Android app, keep the status bar icons readable against the app's background.
+  if (Capacitor.isNativePlatform()) void SystemBars.setStyle({ style: theme === 'dark' ? SystemBarsStyle.Dark : SystemBarsStyle.Light })
 }
 
 /** The user's theme choice (saved on this phone) and the theme actually showing. */

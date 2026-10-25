@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { useRef } from 'react'
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS, type Entry, type Food, type Profile, type Settings, type WeightEntry } from '../types'
 import type { ThemeChoice } from '../theme'
@@ -29,11 +30,19 @@ export function SettingsView({
   onThemeChange: (t: ThemeChoice) => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const exportData = () => {
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+  const exportData = async () => {
+    const json = JSON.stringify(backup, null, 2)
+    const name = `calorie-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`
+    if (Capacitor.isNativePlatform()) {
+      // The Android app can't download files like a browser, so save it and open the share sheet (Drive, email, Files...).
+      const [{ Filesystem, Directory, Encoding }, { Share }] = await Promise.all([import('@capacitor/filesystem'), import('@capacitor/share')])
+      const { uri } = await Filesystem.writeFile({ path: name, data: json, directory: Directory.Cache, encoding: Encoding.UTF8 })
+      await Share.share({ title: 'Calorie Tracker backup', files: [uri] }).catch(() => {})
+      return
+    }
     const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `calorie-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
+    a.download = name
     a.click()
     URL.revokeObjectURL(a.href)
   }

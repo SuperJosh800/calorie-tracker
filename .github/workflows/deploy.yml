@@ -58,6 +58,57 @@ jobs:
         with:
           path: dist
 
+  # Builds the Android app and publishes it as a GitHub Release, so the newest APK is always at
+  # https://github.com/<owner>/<repo>/releases/latest/download/calorie-tracker.apk
+  # Updates only install over an existing app when every APK is signed with the same key, so releases are
+  # published only when the ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD secrets are set.
+  android:
+    needs: pick-runner
+    runs-on: ${{ fromJSON(needs.pick-runner.outputs.runner) }}
+    permissions:
+      contents: write
+    env:
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v4
+      - run: npm ci
+      - run: npm run build && npx cap sync android
+      - name: Build APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ "$HAS_KEY" = true ]; then
+            export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
+            trap 'rm -f "$ANDROID_KEYSTORE_FILE"' EXIT
+            echo "$KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE_FILE"
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is not set, so the APK is signed with a throwaway key and not published as a release."
+          fi
+          cd android && ./gradlew --no-daemon assembleRelease -PversionCode=${{ github.run_number }}
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/calorie-tracker.apk"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: calorie-tracker-apk
+          path: calorie-tracker.apk
+      - if: env.HAS_KEY == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: android-v1.0.${{ github.run_number }}
+          name: Android app 1.0.${{ github.run_number }}
+          body: Download calorie-tracker.apk below on your Android phone and open it to install or update.
+          files: calorie-tracker.apk
+          make_latest: true
+
   deploy:
     needs: [pick-runner, build]
     runs-on: ${{ fromJSON(needs.pick-runner.outputs.runner) }}

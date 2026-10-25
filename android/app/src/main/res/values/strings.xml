@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Calorie Tracker</string>
+    <string name="title_activity_main">Calorie Tracker</string>
+    <string name="package_name">io.github.superjosh800.calorietracker</string>
+    <string name="custom_url_scheme">io.github.superjosh800.calorietracker</string>
+</resources>

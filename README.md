@@ -49,6 +49,31 @@ The app is published to GitHub Pages by the workflow in `.github/workflows/deplo
 
 Updates are picked up automatically the next time you open the app after a push.
 
+### Android app (APK)
+
+The same workflow also builds an Android app with [Capacitor](https://capacitorjs.com) (the `android/` folder).
+Every push publishes it as a GitHub Release, so the newest version is always at
+**https://github.com/SuperJosh800/calorie-tracker/releases/latest/download/calorie-tracker.apk**.
+
+One-time setup: create a signing key and save it as two repository secrets. Every update must be signed with the
+same key or Android refuses to install it over the old app, so keep a copy of the key file somewhere safe.
+
+```sh
+keytool -genkeypair -keystore calorie-tracker.keystore -storetype PKCS12 -alias calorie-tracker \
+  -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Calorie Tracker"
+base64 -w0 calorie-tracker.keystore   # paste the output into the ANDROID_KEYSTORE_BASE64 secret
+```
+
+Save the password you chose as `ANDROID_KEYSTORE_PASSWORD`. Without these secrets the APK is still built (download
+it from the run's **Artifacts**), but no release is published.
+
+To install, open the download link on your Android phone, open the file, and allow your browser to install
+unknown apps when asked. To update, install the newer APK the same way; your diary is kept. Data in the app is
+separate from the website, so use **Settings → Export backup** and **Import backup** to move it across.
+
+To build it yourself you need JDK 21 and the Android SDK: `npm run build && npx cap sync android`, then
+`cd android && ./gradlew assembleRelease`.
+
 ## Develop
 
 ```sh
