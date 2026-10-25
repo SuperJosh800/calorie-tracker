@@ -95,10 +95,19 @@ export function planFor(p: Profile, kg: number, maintenance: number) {
   }
 }
 
-export function weeksToTarget(currentKg: number, p: Profile): number | undefined {
-  if (!p.targetWeightKg || !p.ratePerWeekKg || (p.aim !== 'lose' && p.aim !== 'gain')) return undefined
-  const remaining = p.aim === 'lose' ? currentKg - p.targetWeightKg : p.targetWeightKg - currentKg
-  return remaining > 0 ? remaining / p.ratePerWeekKg : 0
+/** The weight change the user's plan aims for, in kg per week (negative when losing). */
+export function plannedKgPerWeek(p: Profile, maintenance?: number): number | undefined {
+  if (p.aim === 'lose') return p.ratePerWeekKg ? -p.ratePerWeekKg : undefined
+  if (p.aim === 'gain') return p.ratePerWeekKg
+  // Losing fat while building muscle: the 10% deficit's worth of weight, though muscle gain slows the scale.
+  if (p.aim === 'recomp' && maintenance) return -(maintenance * RECOMP_DEFICIT * 7) / KCAL_PER_KG
+  return undefined
+}
+
+/** Weeks to reach the target weight at the planned pace. */
+export function weeksToTarget(currentKg: number, p: Profile, maintenance?: number): number | undefined {
+  if (!p.targetWeightKg) return undefined
+  return weeksToReach(currentKg, p.targetWeightKg, plannedKgPerWeek(p, maintenance))
 }
 
 export const ESTIMATE_WINDOW_DAYS = 28
@@ -141,4 +150,86 @@ export function estimateFromLogs(weights: WeightEntry[], kcalByDate: Record<stri
     xs.reduce((sum, x, i) => sum + (x - mx) * (ys[i] - my), 0) / xs.reduce((sum, x) => sum + (x - mx) ** 2, 0)
   const avgIntake = logged.reduce((sum, [, kcal]) => sum + kcal, 0) / logged.length
   return { ok: true, maintenance: avgIntake - slope * KCAL_PER_KG, avgIntake, kgPerWeek: slope * 7, ...result }
+}
+
+/** Weight on a date: the last weigh-in on or before it (or the first weigh-in, for earlier dates). */
+function weightOn(sortedWeights: WeightEntry[], date: string): number | undefined {
+  let kg = sortedWeights[0]?.kg
+  for (const w of sortedWeights) {
+    if (w.date > date) break
+    kg = w.kg
+  }
+  return kg
+}
+
+export type MaintenanceEstimate = { kcal: number; source: 'logs' | 'formula' }
+
+/**
+ * Best maintenance estimate as of a date, looking back from it like MacroFactor's expenditure:
+ * from the user's own logs when there is enough data and the result is plausible, otherwise the formula.
+ */
+export function maintenanceOn(
+  p: Profile,
+  sortedWeights: WeightEntry[],
+  kcalByDate: Record<string, number>,
+  date: string,
+): MaintenanceEstimate | undefined {
+  const fromLogs = estimateFromLogs(sortedWeights, kcalByDate, date)
+  // A clearly impossible result usually means meals weren't all logged.
+  if (fromLogs.ok && fromLogs.maintenance > 1000 && fromLogs.maintenance < 6000) {
+    return { kcal: fromLogs.maintenance, source: 'logs' }
+  }
+  const kg = weightOn(sortedWeights, date)
+  const kcal = kg ? formulaMaintenance(p, kg) : undefined
+  return kcal ? { kcal, source: 'formula' } : undefined
+}
+
+/** How much of the gap to each new weigh-in the trend closes per day (the Hacker's Diet uses 10%). */
+const TREND_SMOOTHING_PER_DAY = 0.1
+
+/**
+ * Trend weight: an exponentially weighted moving average of the weigh-ins, which smooths out day-to-day
+ * swings from water, salt and food. Gaps between weigh-ins count as more days of smoothing.
+ */
+export function weightTrend(sortedWeights: WeightEntry[]): (WeightEntry & { trend: number })[] {
+  let trend: number | undefined
+  let lastDate: string | undefined
+  return sortedWeights.map((w) => {
+    if (trend === undefined || lastDate === undefined) trend = w.kg
+    else {
+      const days = Math.max(daysBetween(lastDate, w.date), 1)
+      const alpha = 1 - (1 - TREND_SMOOTHING_PER_DAY) ** days
+      trend += alpha * (w.kg - trend)
+    }
+    lastDate = w.date
+    return { ...w, trend }
+  })
+}
+
+const RATE_WINDOW_DAYS = 28
+const RATE_MIN_SPAN_DAYS = 7
+
+/** Current rate of weight change in kg per week: a least-squares line through the last 4 weeks of weigh-ins. */
+export function weightRate(sortedWeights: WeightEntry[], today: string): number | undefined {
+  const recent = sortedWeights.filter((w) => {
+    const age = daysBetween(w.date, today)
+    return age >= 0 && age < RATE_WINDOW_DAYS
+  })
+  if (recent.length < 2) return undefined
+  const first = recent[0].date
+  const xs = recent.map((w) => daysBetween(first, w.date))
+  if (xs.at(-1)! < RATE_MIN_SPAN_DAYS) return undefined
+  const mx = xs.reduce((a, b) => a + b, 0) / xs.length
+  const my = recent.reduce((a, w) => a + w.kg, 0) / recent.length
+  const slope =
+    xs.reduce((s, x, i) => s + (x - mx) * (recent[i].kg - my), 0) / xs.reduce((s, x) => s + (x - mx) ** 2, 0)
+  return slope * 7
+}
+
+/** Weeks to go from `fromKg` to `targetKg` at `kgPerWeek`; undefined when that rate isn't heading towards the target. */
+export function weeksToReach(fromKg: number, targetKg: number, kgPerWeek: number | undefined): number | undefined {
+  const remaining = targetKg - fromKg
+  if (Math.abs(remaining) < 0.05) return 0
+  if (!kgPerWeek || Math.sign(kgPerWeek) !== Math.sign(remaining)) return undefined
+  return remaining / kgPerWeek
 }

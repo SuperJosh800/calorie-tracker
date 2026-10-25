@@ -1,5 +1,17 @@
 import { useState } from 'react'
-import { ACTIVITY_LEVELS, ageOf, AIMS, DEFAULT_RATE, formulaMaintenance, KCAL_PER_KG, planFor, RATES, round10, weeksToTarget } from '../energy'
+import {
+  ACTIVITY_LEVELS,
+  ageOf,
+  AIMS,
+  DEFAULT_RATE,
+  formulaMaintenance,
+  KCAL_PER_KG,
+  planFor,
+  plannedKgPerWeek,
+  RATES,
+  round10,
+  weeksToTarget,
+} from '../energy'
 import { formatNumber } from '../nutrients'
 import type { Profile, Settings } from '../types'
 import { formatRate, formatWeight } from '../units'
@@ -43,7 +55,7 @@ export function Onboarding({
 
   const maintenance = kg ? formulaMaintenance(p, kg) : undefined
   const plan = kg && maintenance ? planFor(p, kg, maintenance) : undefined
-  const weeks = kg ? weeksToTarget(kg, p) : undefined
+  const weeks = kg ? weeksToTarget(kg, p, maintenance) : undefined
 
   return (
     <div className="onboarding">
@@ -160,12 +172,14 @@ export function Onboarding({
               </span>
               <WeightInput kg={kg} unit={p.weightUnit} onChange={setKg} />
             </div>
+            {p.aim && p.aim !== 'maintain' && (
+              <label className="field">
+                <span>Goal weight (optional)</span>
+                <WeightInput kg={p.targetWeightKg} unit={p.weightUnit} label="Target weight" onChange={(t) => set({ targetWeightKg: t })} />
+              </label>
+            )}
             {(p.aim === 'lose' || p.aim === 'gain') && (
               <>
-                <label className="field">
-                  <span>Target weight (optional)</span>
-                  <WeightInput kg={p.targetWeightKg} unit={p.weightUnit} label="Target weight" onChange={(t) => set({ targetWeightKg: t })} />
-                </label>
                 <label className="field">
                   <span>Pace</span>
                   <select value={p.ratePerWeekKg ?? ''} onChange={(e) => set({ ratePerWeekKg: Number(e.target.value) })}>
@@ -242,7 +256,7 @@ export function Onboarding({
             )}
             {weeks !== undefined && weeks > 0 && p.targetWeightKg && (
               <p className="plan-eta">
-                At {formatRate(p.ratePerWeekKg!, p.weightUnit)} a week you could reach{' '}
+                At {formatRate(Math.abs(plannedKgPerWeek(p, maintenance)!), p.weightUnit)} a week you could reach{' '}
                 <strong>{formatWeight(p.targetWeightKg, p.weightUnit)}</strong> in about{' '}
                 <strong>{Math.ceil(weeks)} weeks</strong>.
               </p>

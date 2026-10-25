@@ -12,6 +12,13 @@ works on both iPhone and Android with no app store needed.
 - **Goals**: choose an aim (lose weight, lose fat & build muscle, stay the same, or gain weight), log your weight
   in kg, stones & pounds or pounds, and see your maintenance calories and a daily target. Maintenance starts from
   the Mifflin-St Jeor formula; after two weeks of weigh-ins and food logging it is worked out from your own data.
+- **Trend weight**: a smoothed weight that ignores day-to-day swings from water and food, with your rate of
+  change over the last four weeks.
+- **Time to goal**: set a goal weight (for example 75 kg) and see roughly how many weeks it will take, both at
+  your planned pace and at the rate you're actually going.
+- **Energy balance**: daily bars showing your surplus or deficit against what you burned, or against your target,
+  over a week, a month or three months.
+- **Light and dark mode**: tap the sun/moon button at the top, or pick System, Light or Dark in Settings.
 - **Search**:
   - about 2,900 everyday UK foods from McCance and Widdowson's
     [Composition of Foods Integrated Dataset](https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid)

@@ -8,6 +8,7 @@ import {
   estimateFromLogs,
   formulaMaintenance,
   KCAL_PER_KG,
+  maintenanceOn,
   planFor,
   RATES,
   RECOMP_DEFICIT,
@@ -17,6 +18,7 @@ import { entryNutrients, formatNumber } from '../nutrients'
 import { DEFAULT_SETTINGS, type Entry, type Profile, type Settings, type WeightEntry } from '../types'
 import { formatRate, formatWeightChange } from '../units'
 import { dateKey } from '../util'
+import { EnergyBalanceCard } from './EnergyBalanceCard'
 import { HeightInput, WeightInput } from './MeasureInputs'
 import { WeightCard } from './WeightCard'
 
@@ -51,9 +53,9 @@ export function GoalsView({
 
   const formula = latestKg ? formulaMaintenance(profile, latestKg) : undefined
   const fromLogs = estimateFromLogs(sorted, kcalByDate, today)
-  // Ignore a log-based estimate that is clearly off, usually because meals weren't all logged.
-  const logsUsable = fromLogs.ok && fromLogs.maintenance > 1000 && fromLogs.maintenance < 6000
-  const maintenance = logsUsable && fromLogs.ok ? fromLogs.maintenance : formula
+  const estimate = maintenanceOn(profile, sorted, kcalByDate, today)
+  const logsUsable = estimate?.source === 'logs'
+  const maintenance = estimate?.kcal
   const plan = maintenance && profile.aim && latestKg ? planFor(profile, latestKg, maintenance) : undefined
   const target = plan?.target
   const macros = plan?.macros
@@ -118,25 +120,31 @@ set({ aim: a.id, ratePerWeekKg: DEFAULT_RATE[a.id] })
                 {profile.aim === 'lose' ? 'less' : 'more'} than you burn.
               </p>
             )}
-            <label className="field">
-              <span>Target weight (optional)</span>
-              <WeightInput
-                kg={profile.targetWeightKg}
-                unit={unit}
-                label="Target weight"
-                onChange={(kg) => set({ targetWeightKg: kg })}
-              />
-            </label>
+
           </>
+        )}
+        {profile.aim && profile.aim !== 'maintain' && (
+          <label className="field">
+            <span>Goal weight (optional)</span>
+            <WeightInput
+              kg={profile.targetWeightKg}
+              unit={unit}
+              label="Target weight"
+              onChange={(kg) => set({ targetWeightKg: kg })}
+            />
+          </label>
         )}
       </section>
 
       <WeightCard
         weights={sorted}
         profile={profile}
+        maintenance={maintenance}
         onSave={(entry) => onWeightsChange([...weights.filter((w) => w.date !== entry.date), entry])}
         onDelete={(date) => onWeightsChange(weights.filter((w) => w.date !== date))}
       />
+
+      <EnergyBalanceCard profile={profile} weights={sorted} kcalByDate={kcalByDate} calorieGoal={settings.calorieGoal} />
 
       <section className="card">
         <h2 className="card-title">About you</h2>

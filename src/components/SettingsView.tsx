@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS, type Entry, type Food, type Profile, type Settings, type WeightEntry } from '../types'
+import type { ThemeChoice } from '../theme'
 import { USDA_SIGNUP_URL } from '../usda'
 
 export interface Backup {
@@ -16,12 +17,16 @@ export function SettingsView({
   backup,
   onRestore,
   onRestartSetup,
+  theme,
+  onThemeChange,
 }: {
   settings: Settings
   onChange: (s: Settings) => void
   backup: Backup
   onRestore: (b: Backup) => void
   onRestartSetup: () => void
+  theme: ThemeChoice
+  onThemeChange: (t: ThemeChoice) => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const exportData = () => {
@@ -52,6 +57,24 @@ export function SettingsView({
 
   return (
     <>
+      <section className="card">
+        <h2 className="card-title">Appearance</h2>
+        <div className="segmented" role="radiogroup" aria-label="Theme">
+          {(
+            [
+              ['system', 'System'],
+              ['light', 'Light'],
+              ['dark', 'Dark'],
+            ] as const
+          ).map(([value, label]) => (
+            <button key={value} role="radio" aria-checked={theme === value} className={theme === value ? 'active' : ''} onClick={() => onThemeChange(value)}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="hint">System follows your phone's light or dark setting. The moon/sun button at the top switches instantly.</p>
+      </section>
+
       <section className="card">
         <h2 className="card-title">Food search</h2>
         <p className="hint">

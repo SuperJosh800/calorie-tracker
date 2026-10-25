@@ -4,11 +4,22 @@ import { CustomFoodForm } from './components/CustomFoodForm'
 import { DiaryView } from './components/DiaryView'
 import { GoalsView } from './components/GoalsView'
 import { FoodSheet } from './components/FoodSheet'
-import { BookIcon, ChartIcon, ChevronLeft, ChevronRight, GearIcon, ScanIcon, TargetIcon } from './components/icons'
+import {
+  BookIcon,
+  ChartIcon,
+  ChevronLeft,
+  ChevronRight,
+  GearIcon,
+  MoonIcon,
+  ScanIcon,
+  SunIcon,
+  TargetIcon,
+} from './components/icons'
 import { NutrientsView } from './components/NutrientsView'
 import { Onboarding } from './components/Onboarding'
 import { SettingsView } from './components/SettingsView'
 import { dailyTargets } from './nutrients'
+import { useTheme } from './theme'
 import {
   DEFAULT_PROFILE,
   DEFAULT_SETTINGS,
@@ -35,6 +46,7 @@ export default function App() {
   const [storedProfile, setProfile] = usePersistentState<Profile>('ct.profile', DEFAULT_PROFILE)
   const profile = { ...DEFAULT_PROFILE, ...storedProfile }
   const [weights, setWeights] = usePersistentState<WeightEntry[]>('ct.weights', [])
+  const theme = useTheme()
   const [date, setDate] = useState(() => dateKey(new Date()))
   const [tab, setTab] = useState<Tab>('diary')
   const [sheet, setSheet] = useState<SheetState | null>(null)
@@ -113,6 +125,13 @@ export default function App() {
             </button>
           </div>
         )}
+        <button
+          className="icon-btn theme-btn"
+          onClick={() => theme.setChoice(theme.resolved === 'dark' ? 'light' : 'dark')}
+          aria-label={theme.resolved === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme.resolved === 'dark' ? <SunIcon /> : <MoonIcon />}
+        </button>
       </header>
 
       <main className="content">
@@ -143,6 +162,8 @@ export default function App() {
             onChange={setSettings}
             backup={{ entries, foods: myFoods, settings, profile, weights }}
             onRestartSetup={() => setProfile({ ...profile, onboarded: false })}
+            theme={theme.choice}
+            onThemeChange={theme.setChoice}
             onRestore={(b) => {
               setEntries(b.entries)
               setMyFoods(b.foods)

@@ -12,21 +12,21 @@
   --fat: #db2777;
   --radius: 16px;
   --tabbar-h: 64px;
-  color-scheme: light dark;
+  color-scheme: light;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e1411;
-    --card: #18201c;
-    --text: #e8eeea;
-    --muted: #93a199;
-    --line: #2a342f;
-    --accent: #22c55e;
-    --accent-soft: #14301f;
-  }
+/* Set on <html> by theme.ts from the user's choice or the phone's setting. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0e1411;
+  --card: #18201c;
+  --text: #e8eeea;
+  --muted: #93a199;
+  --line: #2a342f;
+  --accent: #22c55e;
+  --accent-soft: #14301f;
 }
 
 * {
@@ -1072,7 +1072,7 @@ select:focus {
 
 .weight-row {
   display: grid;
-  grid-template-columns: 1fr auto 36px;
+  grid-template-columns: 1fr auto auto 36px;
   align-items: center;
   gap: 8px;
   padding: 4px 0;
@@ -1318,4 +1318,169 @@ select:focus {
 .plan-eta {
   margin: 0 0 8px;
   line-height: 1.5;
+}
+
+.theme-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
+/* Trend weight chart */
+.weight-chart-wrap {
+  margin: 4px 0 8px;
+}
+
+.weight-chart-wrap .weight-chart {
+  margin: 0;
+}
+
+.chart-scale-dot {
+  fill: var(--muted);
+  opacity: 0.45;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.legend-line {
+  display: inline-block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.45;
+}
+
+.goal-eta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.goal-eta strong {
+  font-size: 0.95rem;
+}
+
+/* Energy balance */
+.balance-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 66px;
+  margin: 4px 0;
+}
+
+.balance-summary .hint {
+  margin: 0;
+}
+
+.balance-summary strong {
+  font-size: 1.25rem;
+}
+
+.surplus {
+  --bar: #f59e0b;
+}
+
+.deficit {
+  --bar: #3b82f6;
+}
+
+.balance-summary strong.surplus {
+  color: #d97706;
+}
+
+.balance-summary strong.deficit {
+  color: #2563eb;
+}
+
+:root[data-theme='dark'] .balance-summary strong.surplus {
+  color: #fbbf24;
+}
+
+:root[data-theme='dark'] .balance-summary strong.deficit {
+  color: #60a5fa;
+}
+
+.balance-chart {
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+}
+
+.balance-zero {
+  stroke: var(--muted);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.balance-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.balance-bar {
+  fill: var(--bar);
+}
+
+.balance-bar.partial {
+  opacity: 0.35;
+}
+
+.balance-day:hover .balance-hit {
+  fill: var(--line);
+  opacity: 0.5;
+}
+
+.balance-bar.selected {
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.balance-missing {
+  fill: var(--muted);
+  opacity: 0.5;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--bar);
+}
+
+.legend-swatch.deficit {
+  margin-left: 8px;
+}
+
+.legend-note {
+  margin: 0 0 0 auto;
+  font-size: 0.75rem;
+}
+
+.segmented.range {
+  margin-top: 10px;
 }
