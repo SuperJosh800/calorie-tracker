@@ -62,3 +62,32 @@ export const DEFAULT_SETTINGS: Settings = {
   carbsGoal: 260,
   fatGoal: 70,
 }
+
+export type Sex = 'male' | 'female'
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'veryActive'
+/** `recomp` means losing body fat while building muscle. */
+export type Aim = 'lose' | 'recomp' | 'maintain' | 'gain'
+export type WeightUnit = 'kg' | 'stlb' | 'lb'
+export type HeightUnit = 'cm' | 'ftin'
+
+/** What the user is aiming for and the details the calorie formula needs. */
+export interface Profile {
+  aim?: Aim
+  /** Planned change in kg per week (positive number) when aiming to lose or gain weight. */
+  ratePerWeekKg?: number
+  targetWeightKg?: number
+  sex?: Sex
+  birthYear?: number
+  heightCm?: number
+  activity?: ActivityLevel
+  weightUnit: WeightUnit
+  heightUnit: HeightUnit
+}
+
+export const DEFAULT_PROFILE: Profile = { weightUnit: 'kg', heightUnit: 'cm' }
+
+/** One weigh-in per day. */
+export interface WeightEntry {
+  date: string
+  kg: number
+}

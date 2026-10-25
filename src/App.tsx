@@ -2,15 +2,25 @@ import { useEffect, useMemo, useState } from 'react'
 import { AddFoodSheet, type AddTab } from './components/AddFoodSheet'
 import { CustomFoodForm } from './components/CustomFoodForm'
 import { DiaryView } from './components/DiaryView'
+import { GoalsView } from './components/GoalsView'
 import { FoodSheet } from './components/FoodSheet'
-import { BookIcon, ChartIcon, ChevronLeft, ChevronRight, GearIcon, ScanIcon } from './components/icons'
+import { BookIcon, ChartIcon, ChevronLeft, ChevronRight, GearIcon, ScanIcon, TargetIcon } from './components/icons'
 import { NutrientsView } from './components/NutrientsView'
 import { SettingsView } from './components/SettingsView'
 import { dailyTargets } from './nutrients'
-import { DEFAULT_SETTINGS, type Entry, type Food, type Meal, type Settings } from './types'
+import {
+  DEFAULT_PROFILE,
+  DEFAULT_SETTINGS,
+  type Entry,
+  type Food,
+  type Meal,
+  type Profile,
+  type Settings,
+  type WeightEntry,
+} from './types'
 import { dateKey, formatDateLabel, mealForNow, shiftDate, uid, usePersistentState } from './util'
 
-type Tab = 'diary' | 'nutrients' | 'settings'
+type Tab = 'diary' | 'nutrients' | 'goals' | 'settings'
 type SheetState =
   | { kind: 'add'; meal: Meal; tab: AddTab }
   | { kind: 'food'; food: Food; meal: Meal; entry?: Entry }
@@ -21,6 +31,9 @@ export default function App() {
   const [myFoods, setMyFoods] = usePersistentState<Food[]>('ct.foods', [])
   const [storedSettings, setSettings] = usePersistentState<Settings>('ct.settings', DEFAULT_SETTINGS)
   const settings = { ...DEFAULT_SETTINGS, ...storedSettings }
+  const [storedProfile, setProfile] = usePersistentState<Profile>('ct.profile', DEFAULT_PROFILE)
+  const profile = { ...DEFAULT_PROFILE, ...storedProfile }
+  const [weights, setWeights] = usePersistentState<WeightEntry[]>('ct.weights', [])
   const [date, setDate] = useState(() => dateKey(new Date()))
   const [tab, setTab] = useState<Tab>('diary')
   const [sheet, setSheet] = useState<SheetState | null>(null)
@@ -64,8 +77,8 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        {tab === 'settings' ? (
-          <h1>Settings</h1>
+        {tab === 'settings' || tab === 'goals' ? (
+          <h1>{tab === 'goals' ? 'Goals' : 'Settings'}</h1>
         ) : (
           <div className="date-nav">
             <button className="icon-btn" onClick={() => setDate((d) => shiftDate(d, -1))} aria-label="Previous day">
@@ -91,15 +104,28 @@ export default function App() {
           />
         )}
         {tab === 'nutrients' && <NutrientsView entries={dayEntries} settings={settings} />}
+        {tab === 'goals' && (
+          <GoalsView
+            profile={profile}
+            onProfileChange={setProfile}
+            weights={weights}
+            onWeightsChange={setWeights}
+            entries={entries}
+            settings={settings}
+            onSettingsChange={setSettings}
+          />
+        )}
         {tab === 'settings' && (
           <SettingsView
             settings={settings}
             onChange={setSettings}
-            backup={{ entries, foods: myFoods, settings }}
+            backup={{ entries, foods: myFoods, settings, profile, weights }}
             onRestore={(b) => {
               setEntries(b.entries)
               setMyFoods(b.foods)
               setSettings(b.settings)
+              setProfile(b.profile)
+              setWeights(b.weights)
             }}
           />
         )}
@@ -110,15 +136,19 @@ export default function App() {
           <BookIcon />
           <span>Diary</span>
         </button>
+        <button className={tab === 'nutrients' ? 'active' : ''} onClick={() => setTab('nutrients')}>
+          <ChartIcon />
+          <span>Nutrients</span>
+        </button>
         <button className="scan-btn" onClick={() => setSheet({ kind: 'add', meal: mealForNow(), tab: 'scan' })}>
           <span className="scan-circle">
             <ScanIcon />
           </span>
           <span>Scan</span>
         </button>
-        <button className={tab === 'nutrients' ? 'active' : ''} onClick={() => setTab('nutrients')}>
-          <ChartIcon />
-          <span>Nutrients</span>
+        <button className={tab === 'goals' ? 'active' : ''} onClick={() => setTab('goals')}>
+          <TargetIcon />
+          <span>Goals</span>
         </button>
         <button className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>
           <GearIcon />

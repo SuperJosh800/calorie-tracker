@@ -7,6 +7,9 @@ works on both iPhone and Android with no app store needed.
 - **Full nutrients**: energy, fat, saturates, carbs, sugars, fibre, protein, salt, plus every vitamin and mineral
   on the label, with % of your daily target.
 - **Diary**: breakfast, lunch, dinner and snacks for each day, with a calorie ring and macro bars.
+- **Goals**: choose an aim (lose weight, lose fat & build muscle, stay the same, or gain weight), log your weight
+  in kg, stones & pounds or pounds, and see your maintenance calories and a daily target. Maintenance starts from
+  the Mifflin-St Jeor formula; after two weeks of weigh-ins and food logging it is worked out from your own data.
 - **Search**:
   - about 2,900 everyday UK foods from McCance and Widdowson's
     [Composition of Foods Integrated Dataset](https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid)

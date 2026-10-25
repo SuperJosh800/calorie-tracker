@@ -1,11 +1,13 @@
 import { useRef } from 'react'
-import { DEFAULT_SETTINGS, type Entry, type Food, type Settings } from '../types'
+import { DEFAULT_PROFILE, DEFAULT_SETTINGS, type Entry, type Food, type Profile, type Settings, type WeightEntry } from '../types'
 import { USDA_SIGNUP_URL } from '../usda'
 
 export interface Backup {
   entries: Entry[]
   foods: Food[]
   settings: Settings
+  profile: Profile
+  weights: WeightEntry[]
 }
 
 export function SettingsView({
@@ -20,13 +22,6 @@ export function SettingsView({
   onRestore: (b: Backup) => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const goals: [Exclude<keyof Settings, 'usdaApiKey'>, string, string][] = [
-    ['calorieGoal', 'Calories', 'kcal'],
-    ['proteinGoal', 'Protein', 'g'],
-    ['carbsGoal', 'Carbohydrate', 'g'],
-    ['fatGoal', 'Fat', 'g'],
-  ]
-
   const exportData = () => {
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
@@ -41,7 +36,13 @@ export function SettingsView({
       const data = JSON.parse(await file.text()) as Partial<Backup>
       if (!Array.isArray(data.entries)) throw new Error('missing entries')
       if (!confirm(`Replace your data with ${data.entries.length} entries from this backup?`)) return
-      onRestore({ entries: data.entries, foods: data.foods ?? [], settings: { ...DEFAULT_SETTINGS, ...data.settings } })
+      onRestore({
+        entries: data.entries,
+        foods: data.foods ?? [],
+        settings: { ...DEFAULT_SETTINGS, ...data.settings },
+        profile: { ...DEFAULT_PROFILE, ...data.profile },
+        weights: data.weights ?? [],
+      })
     } catch {
       alert('That file is not a Calorie Tracker backup.')
     }
@@ -49,25 +50,6 @@ export function SettingsView({
 
   return (
     <>
-      <section className="card">
-        <h2 className="card-title">Daily goals</h2>
-        {goals.map(([key, label, unit]) => (
-          <label key={key} className="field inline">
-            <span>{label}</span>
-            <span className="input-unit">
-              <input
-                inputMode="numeric"
-                value={settings[key] || ''}
-                onChange={(e) => onChange({ ...settings, [key]: Number(e.target.value.replace(/\D/g, '')) || 0 })}
-                onBlur={() => !settings[key] && onChange({ ...settings, [key]: DEFAULT_SETTINGS[key] })}
-              />
-              <small>{unit}</small>
-            </span>
-          </label>
-        ))}
-        <p className="hint">Defaults are UK adult reference intakes. Other vitamins and minerals use UK reference intakes.</p>
-      </section>
-
       <section className="card">
         <h2 className="card-title">Food search</h2>
         <p className="hint">

@@ -13,6 +13,15 @@ export function shiftDate(key: string, days: number): string {
   return dateKey(new Date(y, m - 1, d + days))
 }
 
+/** Whole days from date key `a` to date key `b` (negative when `b` is earlier). */
+export function daysBetween(a: string, b: string): number {
+  const toUtc = (key: string) => {
+    const [y, m, d] = key.split('-').map(Number)
+    return Date.UTC(y, m - 1, d)
+  }
+  return Math.round((toUtc(b) - toUtc(a)) / 86_400_000)
+}
+
 export function formatDateLabel(key: string): string {
   const today = dateKey(new Date())
   if (key === today) return 'Today'
