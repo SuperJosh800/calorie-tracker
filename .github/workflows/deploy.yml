@@ -15,8 +15,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Use the self-hosted runner when it's online, otherwise GitHub's own runners.
+  # Checking runner status needs a token with "Administration: Read-only" access to this repo,
+  # saved as the RUNNER_STATUS_TOKEN secret. Without it, GitHub's runners are always used.
+  pick-runner:
     runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.pick.outputs.runner }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+        run: |
+          runner='"ubuntu-latest"'
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::RUNNER_STATUS_TOKEN is not set, using GitHub-hosted runners."
+          elif online=$(gh api "repos/$GITHUB_REPOSITORY/actions/runners" \
+              --jq '[.runners[] | select(.status == "online")] | length'); then
+            if [ "$online" -gt 0 ]; then
+              runner='["self-hosted", "linux"]'
+              echo "::notice::Self-hosted runner is online, using it."
+            else
+              echo "::notice::Self-hosted runner is offline, using GitHub-hosted runners."
+            fi
+          else
+            echo "::warning::Could not check runner status, using GitHub-hosted runners."
+          fi
+          echo "runner=$runner" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: pick-runner
+    runs-on: ${{ fromJSON(needs.pick-runner.outputs.runner) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,8 +59,8 @@ jobs:
           path: dist
 
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
+    needs: [pick-runner, build]
+    runs-on: ${{ fromJSON(needs.pick-runner.outputs.runner) }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
