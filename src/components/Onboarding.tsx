@@ -171,12 +171,17 @@ export function Onboarding({
                   <select value={p.ratePerWeekKg ?? ''} onChange={(e) => set({ ratePerWeekKg: Number(e.target.value) })}>
                     {RATES[p.aim].map((r) => (
                       <option key={r} value={r}>
-                        {formatRate(r, p.weightUnit)} a week ({Math.round((r * KCAL_PER_KG) / 7)} kcal a day)
-                        {r === DEFAULT_RATE[p.aim!] ? ' – recommended' : ''}
+                        {formatRate(r, p.weightUnit)} a week{r === DEFAULT_RATE[p.aim!] ? ' (recommended)' : ''}
                       </option>
                     ))}
                   </select>
                 </label>
+                {p.ratePerWeekKg && (
+                  <p className="hint">
+                    About {Math.round((p.ratePerWeekKg * KCAL_PER_KG) / 7)} kcal a day {p.aim === 'lose' ? 'less' : 'more'} than
+                    you burn.
+                  </p>
+                )}
               </>
             )}
           </>

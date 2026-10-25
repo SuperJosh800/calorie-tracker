@@ -107,13 +107,17 @@ set({ aim: a.id, ratePerWeekKg: DEFAULT_RATE[a.id] })
               >
                 {RATES[profile.aim].map((r) => (
                   <option key={r} value={r}>
-                    {formatRate(r, unit)} a week ({Math.round((r * KCAL_PER_KG) / 7)} kcal a day{' '}
-                    {profile.aim === 'lose' ? 'less' : 'more'})
-                    {r === DEFAULT_RATE[profile.aim!] ? ' – recommended' : ''}
+                    {formatRate(r, unit)} a week{r === DEFAULT_RATE[profile.aim!] ? ' (recommended)' : ''}
                   </option>
                 ))}
               </select>
             </label>
+            {profile.ratePerWeekKg && (
+              <p className="hint field-hint">
+                About {Math.round((profile.ratePerWeekKg * KCAL_PER_KG) / 7)} kcal a day{' '}
+                {profile.aim === 'lose' ? 'less' : 'more'} than you burn.
+              </p>
+            )}
             <label className="field">
               <span>Target weight (optional)</span>
               <WeightInput

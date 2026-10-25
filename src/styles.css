@@ -1146,6 +1146,11 @@ select:focus {
   margin: 0 0 4px;
 }
 
+/* Fields stretch to share a row elsewhere; here they stack, so keep them their natural height. */
+.onboarding-body .field {
+  flex: none;
+}
+
 .welcome {
   flex: 1;
   display: flex;
