@@ -26,8 +26,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Precache the barcode reader's WebAssembly so scanning works offline once installed.
-        globPatterns: ['**/*.{js,css,html,svg,png,wasm}'],
+        // Precache the barcode reader's WebAssembly and the UK food database so they work offline once installed.
+        globPatterns: ['**/*.{js,css,html,svg,png,wasm,json}'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       },
     }),

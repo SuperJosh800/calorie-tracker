@@ -1,4 +1,5 @@
 import type { Food, Nutrients } from './types'
+import { rankByName } from './util'
 
 /**
  * USDA FoodData Central: free, public-domain data for generic foods (fruit, meat, rice…),
@@ -87,19 +88,6 @@ function toFood(f: UsdaFood): Food {
   }
 }
 
-/** USDA's own ranking is loose ("apple" returns croissants first), so prefer names that start with the query. */
-function rank(foods: Food[], query: string): Food[] {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
-  const score = (f: Food) => {
-    const name = f.name.toLowerCase()
-    let s = 0
-    if (!name.startsWith(words[0] ?? '')) s += 100
-    s += words.filter((w) => !name.includes(w)).length * 50
-    return s + name.length
-  }
-  return [...foods].sort((a, b) => score(a) - score(b))
-}
-
 export async function searchUsda(query: string, apiKey?: string): Promise<Food[]> {
   const params = new URLSearchParams({
     api_key: apiKey?.trim() || 'DEMO_KEY',
@@ -114,5 +102,6 @@ export async function searchUsda(query: string, apiKey?: string): Promise<Food[]
   if (!res.ok) throw new Error(`USDA search returned ${res.status}`)
   const json = (await res.json()) as { foods?: UsdaFood[] }
   const foods = (json.foods ?? []).map(toFood).filter((f) => f.nutrients['energy-kcal'] !== undefined)
-  return rank(foods, query)
+  // USDA's own ranking is loose ("apple" returns croissants first).
+  return rankByName(foods, query)
 }

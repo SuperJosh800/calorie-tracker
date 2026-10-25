@@ -13,6 +13,12 @@ export const MEALS: { id: Meal; label: string }[] = [
  */
 export type Nutrients = Record<string, number>
 
+export type DietStatus = 'yes' | 'no' | 'maybe'
+export interface Diet {
+  vegan?: DietStatus
+  vegetarian?: DietStatus
+}
+
 export interface Food {
   id: string
   name: string
@@ -24,7 +30,9 @@ export interface Food {
   servingSize?: number
   servingLabel?: string
   nutrients: Nutrients
-  source: 'off' | 'usda' | 'custom'
+  /** Vegan/vegetarian status from Open Food Facts' ingredient analysis or the product's labels. */
+  diet?: Diet
+  source: 'off' | 'usda' | 'cofid' | 'custom'
 }
 
 export interface Entry {

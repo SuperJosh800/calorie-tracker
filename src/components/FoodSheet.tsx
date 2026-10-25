@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { entryAmount, formatNumber, scaleNutrients } from '../nutrients'
 import { MEALS, type Entry, type Food, type Meal } from '../types'
-import { FoodThumb } from './FoodRow'
+import { DietBadge, FoodThumb } from './FoodRow'
 import { NutrientTable } from './NutrientTable'
 import { Sheet } from './Sheet'
 
@@ -65,6 +65,7 @@ export function FoodSheet({
         <FoodThumb food={food} />
         <div>
           <h3>{food.name}</h3>
+          <DietBadge diet={food.diet} />
           <p className="hint">
             {[food.brand, food.barcode && `Barcode ${food.barcode}`].filter(Boolean).join(' · ')}
             {onEditFood && (
@@ -142,6 +143,12 @@ export function FoodSheet({
       </div>
 
       <NutrientTable values={values} targets={view === 'amount' ? targets : undefined} />
+      {food.diet && (
+        <p className="hint">
+          Vegan/vegetarian status comes from the product's labels or an automatic check of its ingredients list, so treat
+          it as a guide and check the pack.
+        </p>
+      )}
       {food.source === 'off' && (
         <p className="hint">
           Data from{' '}
@@ -149,6 +156,15 @@ export function FoodSheet({
             Open Food Facts
           </a>
           .
+        </p>
+      )}
+      {food.source === 'cofid' && (
+        <p className="hint">
+          UK data from McCance and Widdowson's{' '}
+          <a href="https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid" target="_blank" rel="noreferrer">
+            Composition of Foods Integrated Dataset
+          </a>
+          . Contains public sector information licensed under the Open Government Licence v3.0.
         </p>
       )}
       {food.source === 'usda' && (

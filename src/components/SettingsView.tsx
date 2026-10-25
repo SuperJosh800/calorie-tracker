@@ -71,8 +71,9 @@ export function SettingsView({
       <section className="card">
         <h2 className="card-title">Food search</h2>
         <p className="hint">
-          Generic foods (fruit, meat, rice…) come from USDA FoodData Central. Without a key, everyone shares a small
-          demo limit. Get a free personal key at{' '}
+          Everyday UK foods come from McCance and Widdowson's UK food database, which is built into the app and always
+          works. Packaged products come from Open Food Facts. You can also search the US database (USDA FoodData
+          Central); without a key, everyone shares a small demo limit. Get a free personal key at{' '}
           <a href={USDA_SIGNUP_URL} target="_blank" rel="noreferrer">
             fdc.nal.usda.gov
           </a>{' '}
@@ -125,7 +126,9 @@ export function SettingsView({
             Open Food Facts
           </a>
           , a free food database built by volunteers and available under the Open Database License. If a product is missing,
-          you can add it there with their app. Generic food data comes from USDA FoodData Central (public domain).
+          you can add it there with their app. UK food data comes from McCance and Widdowson's Composition of Foods
+          Integrated Dataset and contains public sector information licensed under the Open Government Licence v3.0.
+          US food data comes from USDA FoodData Central (public domain).
         </p>
       </section>
     </>

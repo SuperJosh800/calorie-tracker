@@ -1,5 +1,5 @@
 import { NUTRIENT_BY_KEY } from './nutrients'
-import type { Food, Nutrients } from './types'
+import type { Diet, DietStatus, Food, Nutrients } from './types'
 import { uid } from './util'
 
 const API = 'https://world.openfoodfacts.org'
@@ -13,6 +13,8 @@ const FIELDS = [
   'serving_quantity',
   'product_quantity_unit',
   'nutriments',
+  'ingredients_analysis_tags',
+  'labels_tags',
 ].join(',')
 
 type OffProduct = {
@@ -25,9 +27,33 @@ type OffProduct = {
   serving_quantity?: number | string
   product_quantity_unit?: string
   nutriments?: Record<string, unknown>
+  ingredients_analysis_tags?: string[]
+  labels_tags?: string[]
 }
 
 const MASS_UNITS = new Set(['g', 'mg', 'µg', 'mcg'])
+
+/**
+ * A vegan/vegetarian label on the pack counts as "yes"; otherwise use Open Food Facts' automatic
+ * analysis of the ingredients list (en:vegan, en:non-vegan, en:maybe-vegan, and the same for vegetarian).
+ */
+function dietOf(p: OffProduct): Diet | undefined {
+  const analysis = new Set(p.ingredients_analysis_tags ?? [])
+  const labels = new Set(p.labels_tags ?? [])
+  const status = (kind: 'vegan' | 'vegetarian'): DietStatus | undefined =>
+    labels.has(`en:${kind}`) || analysis.has(`en:${kind}`)
+      ? 'yes'
+      : analysis.has(`en:non-${kind}`)
+        ? 'no'
+        : analysis.has(`en:maybe-${kind}`)
+          ? 'maybe'
+          : undefined
+  let vegan = status('vegan')
+  let vegetarian = status('vegetarian')
+  if (vegan === 'yes') vegetarian = 'yes'
+  if (vegetarian === 'no') vegan = 'no'
+  return vegan || vegetarian ? { vegan, vegetarian } : undefined
+}
 
 function toFood(p: OffProduct, barcode?: string): Food {
   const raw = p.nutriments ?? {}
@@ -61,6 +87,7 @@ function toFood(p: OffProduct, barcode?: string): Food {
     servingSize: serving > 0 ? serving : undefined,
     servingLabel: p.serving_size || undefined,
     nutrients,
+    diet: dietOf(p),
     source: 'off',
   }
 }

@@ -7,10 +7,17 @@ works on both iPhone and Android with no app store needed.
 - **Full nutrients**: energy, fat, saturates, carbs, sugars, fibre, protein, salt, plus every vitamin and mineral
   on the label, with % of your daily target.
 - **Diary**: breakfast, lunch, dinner and snacks for each day, with a calorie ring and macro bars.
-- **Search**: packaged products from Open Food Facts (its search is often overloaded, so it can be unavailable)
-  and generic foods such as fruit, meat and rice from [USDA FoodData Central](https://fdc.nal.usda.gov). USDA's
-  shared demo key only allows a few searches an hour; paste a free personal key from
-  [fdc.nal.usda.gov/api-key-signup](https://fdc.nal.usda.gov/api-key-signup) into **Settings** for 1,000 an hour.
+- **Search**:
+  - about 2,900 everyday UK foods from McCance and Widdowson's
+    [Composition of Foods Integrated Dataset](https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid)
+    (CoFID), built into the app so it works offline with no limits;
+  - packaged products from Open Food Facts (its search is often overloaded, so it can be unavailable), with a
+    vegetarian/vegan filter;
+  - on request, US foods from [USDA FoodData Central](https://fdc.nal.usda.gov). USDA's shared demo key only allows
+    a few searches an hour; paste a free personal key from
+    [fdc.nal.usda.gov/api-key-signup](https://fdc.nal.usda.gov/api-key-signup) into **Settings** for 1,000 an hour.
+- **Vegan/vegetarian badges** on packaged products, from the pack's labels or Open Food Facts' check of the
+  ingredients list.
 - **Recent foods and your own foods**: add a product that isn't in the database by copying its label.
   It's remembered by barcode the next time you scan it.
 - **Private and offline**: your diary is stored only on your phone. Use **Settings → Export backup** to keep a copy.
@@ -41,4 +48,9 @@ npm run build    # production build in dist/
 The camera only works on `https://` pages or `localhost`, so test scanning on the GitHub Pages site
 (or any https tunnel) rather than your computer's LAN address.
 
+To update the UK food data, download the CoFID workbook from gov.uk and run
+`uv run --with openpyxl scripts/build-cofid.py <workbook.xlsx>`, which rewrites `public/cofid.json`.
+
 Product data © Open Food Facts contributors, available under the Open Database License.
+UK food data contains public sector information licensed under the Open Government Licence v3.0
+(McCance and Widdowson's Composition of Foods Integrated Dataset 2021).

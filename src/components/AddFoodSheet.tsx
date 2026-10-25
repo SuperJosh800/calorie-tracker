@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
+import { searchCofid } from '../cofid'
 import { hasNutrition, lookupBarcode, searchOpenFoodFacts } from '../openFoodFacts'
 import { MEALS, type Food, type Meal } from '../types'
 import { searchUsda, UsdaRateLimitError } from '../usda'
@@ -15,7 +16,13 @@ type Lookup =
   | { state: 'notFound'; code: string }
   | { state: 'error'; code: string; message: string }
 
-type SourceResult = { state: 'loading' } | { state: 'done'; results: Food[] } | { state: 'error'; message: string }
+type Source = 'uk' | 'off' | 'usda'
+type SourceResult =
+  | { state: 'idle' }
+  | { state: 'loading' }
+  | { state: 'done'; results: Food[] }
+  | { state: 'error'; message: string }
+type DietFilter = 'all' | 'vegetarian' | 'vegan'
 
 export function AddFoodSheet({
   meal,
@@ -40,9 +47,10 @@ export function AddFoodSheet({
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' })
   const [scanKey, setScanKey] = useState(0)
   const [query, setQuery] = useState('')
-  const [search, setSearch] = useState<{ off: SourceResult; usda: SourceResult } | null>(null)
+  const [search, setSearch] = useState<({ query: string } & Record<Source, SourceResult>) | null>(null)
   const searchId = useRef(0)
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [expanded, setExpanded] = useState<Partial<Record<Source, boolean>>>({})
+  const [dietFilter, setDietFilter] = useState<DietFilter>('all')
 
   const handleBarcode = async (code: string) => {
     const mine = myFoods.find((f) => f.barcode === code)
@@ -68,50 +76,77 @@ export function AddFoodSheet({
     setScanKey((k) => k + 1)
   }
 
-  // Both sources are queried at once and each list shows as soon as it arrives:
-  // Open Food Facts for packaged products (often overloaded), USDA for generic foods.
-  const runSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!query.trim()) return
-    const id = ++searchId.current
-    setSearch({ off: { state: 'loading' }, usda: { state: 'loading' } })
-    setExpanded({})
-    const run = (source: 'off' | 'usda', promise: Promise<Food[]>, errorMessage: (e: unknown) => string) =>
-      promise.then(
-        (results) => id === searchId.current && setSearch((s) => s && { ...s, [source]: { state: 'done', results } }),
-        (err) =>
-          id === searchId.current && setSearch((s) => s && { ...s, [source]: { state: 'error', message: errorMessage(err) } }),
-      )
-    run('off', searchOpenFoodFacts(query), () => 'Open Food Facts search is busy right now. Scanning the barcode still works.')
-    run('usda', searchUsda(query, usdaApiKey), (err) =>
-      err instanceof UsdaRateLimitError
-        ? 'The shared USDA search limit has been reached. Add your own free USDA key in Settings to keep searching.'
-        : 'Generic food search is unavailable right now. Check your internet connection.',
+  // Each source fills in its own list as soon as it answers: the built-in UK database instantly,
+  // Open Food Facts for packaged products (often overloaded), and USDA only on request
+  // because its shared demo key allows very few searches an hour.
+  const runSource = (source: Source, q: string, id: number) => {
+    const update = (result: SourceResult) =>
+      id === searchId.current && setSearch((s) => s && { ...s, [source]: result })
+    update({ state: 'loading' })
+    const promise =
+      source === 'uk' ? searchCofid(q) : source === 'off' ? searchOpenFoodFacts(q) : searchUsda(q, usdaApiKey)
+    promise.then(
+      (results) => update({ state: 'done', results }),
+      (err) =>
+        update({
+          state: 'error',
+          message:
+            source === 'off'
+              ? 'Open Food Facts search is busy right now. Scanning the barcode still works.'
+              : source === 'uk'
+                ? 'Could not load the UK food database. Check your internet connection and try again.'
+                : err instanceof UsdaRateLimitError
+                  ? 'The shared USDA search limit has been reached. Add your own free USDA key in Settings to keep searching.'
+                  : 'USDA search is unavailable right now. Check your internet connection.',
+        }),
     )
   }
 
-  // Each source shows its top results first so one long list doesn't hide the other.
+  const runSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = query.trim()
+    if (!q) return
+    const id = ++searchId.current
+    setSearch({ query: q, uk: { state: 'loading' }, off: { state: 'loading' }, usda: { state: 'idle' } })
+    setExpanded({})
+    runSource('uk', q, id)
+    runSource('off', q, id)
+  }
+
+  const dietMatches = (f: Food) =>
+    dietFilter === 'all' || (dietFilter === 'vegan' ? f.diet?.vegan === 'yes' : f.diet?.vegetarian === 'yes')
+
+  // Each source shows its top results first so one long list doesn't hide the others.
   const PREVIEW = 8
-  const searchSection = (title: string, result: SourceResult, emptyText: string) => (
-    <section className="search-section">
-      <h3 className="section-title">{title}</h3>
-      {result.state === 'loading' && <p className="hint">Searching…</p>}
-      {result.state === 'error' && <p className="hint">{result.message}</p>}
-      {result.state === 'done' && result.results.length === 0 && <p className="hint">{emptyText}</p>}
-      {result.state === 'done' && (
+  const searchSection = (
+    source: Source,
+    title: string,
+    emptyText: string,
+    { filter, extra, idle }: { filter?: (f: Food) => boolean; extra?: ReactNode; idle?: ReactNode } = {},
+  ) => {
+    const result = search![source]
+    const results = result.state === 'done' ? result.results.filter(filter ?? (() => true)) : []
+    return (
+      <section className="search-section">
+        <h3 className="section-title">{title}</h3>
+        {extra}
+        {result.state === 'idle' && idle}
+        {result.state === 'loading' && <p className="hint">Searching…</p>}
+        {result.state === 'error' && <p className="hint">{result.message}</p>}
+        {result.state === 'done' && results.length === 0 && <p className="hint">{emptyText}</p>}
         <div className="list">
-          {(expanded[title] ? result.results : result.results.slice(0, PREVIEW)).map((f, i) => (
+          {(expanded[source] ? results : results.slice(0, PREVIEW)).map((f, i) => (
             <FoodRow key={f.id + i} food={f} onClick={() => onPick(f)} />
           ))}
         </div>
-      )}
-      {result.state === 'done' && result.results.length > PREVIEW && !expanded[title] && (
-        <button className="link show-all" onClick={() => setExpanded((x) => ({ ...x, [title]: true }))}>
-          Show all {result.results.length}
-        </button>
-      )}
-    </section>
-  )
+        {results.length > PREVIEW && !expanded[source] && (
+          <button className="link show-all" onClick={() => setExpanded((x) => ({ ...x, [source]: true }))}>
+            Show all {results.length}
+          </button>
+        )}
+      </section>
+    )
+  }
 
   const mealLabel = MEALS.find((m) => m.id === meal)?.label
 
@@ -178,8 +213,36 @@ export function AddFoodSheet({
           </form>
           {search && (
             <>
-              {searchSection('Packaged products', search.off, 'No packaged products found.')}
-              {searchSection('Generic foods', search.usda, 'No generic foods found.')}
+              {searchSection('uk', 'UK foods', 'No UK foods found. Try fewer or simpler words, like "beans".')}
+              {searchSection(
+                'off',
+                'Packaged products',
+                dietFilter === 'all' ? 'No packaged products found.' : `No ${dietFilter} products in these results.`,
+                {
+                  filter: dietMatches,
+                  extra: (
+                    <div className="segmented small" role="group" aria-label="Diet filter">
+                      {(['all', 'vegetarian', 'vegan'] as const).map((d) => (
+                        <button
+                          key={d}
+                          className={dietFilter === d ? 'active' : ''}
+                          aria-pressed={dietFilter === d}
+                          onClick={() => setDietFilter(d)}
+                        >
+                          {d === 'all' ? 'All' : d === 'vegan' ? 'Vegan' : 'Vegetarian'}
+                        </button>
+                      ))}
+                    </div>
+                  ),
+                },
+              )}
+              {searchSection('usda', 'More generic foods (USDA)', 'No USDA foods found.', {
+                idle: (
+                  <button className="btn wide" onClick={() => runSource('usda', search.query, searchId.current)}>
+                    <SearchIcon /> Search the US database too
+                  </button>
+                ),
+              })}
             </>
           )}
         </>

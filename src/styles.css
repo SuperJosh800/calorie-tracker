@@ -879,3 +879,44 @@ select:focus {
 .show-all {
   padding: 8px;
 }
+
+.diet-badge {
+  align-self: flex-start;
+  display: inline-block;
+  margin: 3px 0 2px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.diet-badge.vegan {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.diet-badge.veggie {
+  background: #ecfccb;
+  color: #3f6212;
+}
+
+.diet-badge.meat {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.diet-badge.unsure {
+  background: var(--line);
+  color: var(--muted);
+}
+
+.segmented.small {
+  margin: 6px 0 4px;
+}
+
+.segmented.small button {
+  padding: 6px 4px;
+  font-size: 0.8rem;
+}

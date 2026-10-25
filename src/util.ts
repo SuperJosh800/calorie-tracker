@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Meal } from './types'
+import type { Food, Meal } from './types'
 
 export const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 
@@ -28,6 +28,33 @@ export function mealForNow(): Meal {
   if (h < 15) return 'lunch'
   if (h >= 17 && h < 22) return 'dinner'
   return 'snacks'
+}
+
+const queryWords = (query: string) =>
+  query
+    .toLowerCase()
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    // "crisps" should find "Crisps" and "Crisp bread"; "beans" should find "Baked beans".
+    .map((w) => (w.length > 3 ? w.replace(/s$/, '') : w))
+
+/** Orders foods so names that start with the query and contain all its words come first, shorter names first. */
+export function rankByName(foods: Food[], query: string): Food[] {
+  const words = queryWords(query)
+  const score = (f: Food) => {
+    const name = f.name.toLowerCase()
+    let s = 0
+    if (!name.startsWith(words[0] ?? '')) s += 100
+    s += words.filter((w) => !name.includes(w)).length * 50
+    return s + name.length
+  }
+  return [...foods].sort((a, b) => score(a) - score(b))
+}
+
+/** True when the food's name contains every word of the query. */
+export function matchesQuery(food: Food, query: string): boolean {
+  const name = food.name.toLowerCase()
+  return queryWords(query).every((w) => name.includes(w))
 }
 
 /** useState that persists to localStorage on this device. */
