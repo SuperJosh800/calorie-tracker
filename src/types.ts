@@ -24,7 +24,7 @@ export interface Food {
   servingSize?: number
   servingLabel?: string
   nutrients: Nutrients
-  source: 'off' | 'custom'
+  source: 'off' | 'usda' | 'custom'
 }
 
 export interface Entry {
@@ -44,6 +44,8 @@ export interface Settings {
   proteinGoal: number
   carbsGoal: number
   fatGoal: number
+  /** Optional personal USDA FoodData Central key, for a higher search limit than the shared demo key. */
+  usdaApiKey?: string
 }
 
 export const DEFAULT_SETTINGS: Settings = {

@@ -132,6 +132,7 @@ export default function App() {
           initialTab={sheet.tab}
           recentFoods={recentFoods}
           myFoods={myFoods}
+          usdaApiKey={settings.usdaApiKey}
           onPick={(food) => setSheet({ kind: 'food', food, meal: sheet.meal })}
           onCreate={(initial, notice) => setSheet({ kind: 'custom', meal: sheet.meal, initial, notice })}
           onClose={() => setSheet(null)}

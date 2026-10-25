@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { hasNutrition, lookupBarcode, searchFoods } from '../openFoodFacts'
+import { useRef, useState } from 'react'
+import { hasNutrition, lookupBarcode, searchOpenFoodFacts } from '../openFoodFacts'
 import { MEALS, type Food, type Meal } from '../types'
+import { searchUsda, UsdaRateLimitError } from '../usda'
 import { FoodRow } from './FoodRow'
 import { PlusIcon, SearchIcon } from './icons'
 import { Scanner } from './Scanner'
@@ -14,11 +15,14 @@ type Lookup =
   | { state: 'notFound'; code: string }
   | { state: 'error'; code: string; message: string }
 
+type SourceResult = { state: 'loading' } | { state: 'done'; results: Food[] } | { state: 'error'; message: string }
+
 export function AddFoodSheet({
   meal,
   initialTab,
   recentFoods,
   myFoods,
+  usdaApiKey,
   onPick,
   onCreate,
   onClose,
@@ -27,6 +31,7 @@ export function AddFoodSheet({
   initialTab: AddTab
   recentFoods: Food[]
   myFoods: Food[]
+  usdaApiKey?: string
   onPick: (food: Food) => void
   onCreate: (initial?: Partial<Food>, notice?: string) => void
   onClose: () => void
@@ -35,7 +40,9 @@ export function AddFoodSheet({
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' })
   const [scanKey, setScanKey] = useState(0)
   const [query, setQuery] = useState('')
-  const [search, setSearch] = useState<{ loading: boolean; results?: Food[]; error?: string }>({ loading: false })
+  const [search, setSearch] = useState<{ off: SourceResult; usda: SourceResult } | null>(null)
+  const searchId = useRef(0)
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const handleBarcode = async (code: string) => {
     const mine = myFoods.find((f) => f.barcode === code)
@@ -61,19 +68,50 @@ export function AddFoodSheet({
     setScanKey((k) => k + 1)
   }
 
-  const runSearch = async (e: React.FormEvent) => {
+  // Both sources are queried at once and each list shows as soon as it arrives:
+  // Open Food Facts for packaged products (often overloaded), USDA for generic foods.
+  const runSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
-    setSearch({ loading: true })
-    try {
-      setSearch({ loading: false, results: await searchFoods(query) })
-    } catch {
-      setSearch({
-        loading: false,
-        error: 'Open Food Facts search is busy right now. Try again in a minute, scan the barcode, or create the food yourself.',
-      })
-    }
+    const id = ++searchId.current
+    setSearch({ off: { state: 'loading' }, usda: { state: 'loading' } })
+    setExpanded({})
+    const run = (source: 'off' | 'usda', promise: Promise<Food[]>, errorMessage: (e: unknown) => string) =>
+      promise.then(
+        (results) => id === searchId.current && setSearch((s) => s && { ...s, [source]: { state: 'done', results } }),
+        (err) =>
+          id === searchId.current && setSearch((s) => s && { ...s, [source]: { state: 'error', message: errorMessage(err) } }),
+      )
+    run('off', searchOpenFoodFacts(query), () => 'Open Food Facts search is busy right now. Scanning the barcode still works.')
+    run('usda', searchUsda(query, usdaApiKey), (err) =>
+      err instanceof UsdaRateLimitError
+        ? 'The shared USDA search limit has been reached. Add your own free USDA key in Settings to keep searching.'
+        : 'Generic food search is unavailable right now. Check your internet connection.',
+    )
   }
+
+  // Each source shows its top results first so one long list doesn't hide the other.
+  const PREVIEW = 8
+  const searchSection = (title: string, result: SourceResult, emptyText: string) => (
+    <section className="search-section">
+      <h3 className="section-title">{title}</h3>
+      {result.state === 'loading' && <p className="hint">Searching…</p>}
+      {result.state === 'error' && <p className="hint">{result.message}</p>}
+      {result.state === 'done' && result.results.length === 0 && <p className="hint">{emptyText}</p>}
+      {result.state === 'done' && (
+        <div className="list">
+          {(expanded[title] ? result.results : result.results.slice(0, PREVIEW)).map((f, i) => (
+            <FoodRow key={f.id + i} food={f} onClick={() => onPick(f)} />
+          ))}
+        </div>
+      )}
+      {result.state === 'done' && result.results.length > PREVIEW && !expanded[title] && (
+        <button className="link show-all" onClick={() => setExpanded((x) => ({ ...x, [title]: true }))}>
+          Show all {result.results.length}
+        </button>
+      )}
+    </section>
+  )
 
   const mealLabel = MEALS.find((m) => m.id === meal)?.label
 
@@ -128,22 +166,22 @@ export function AddFoodSheet({
           <form className="row-form" onSubmit={runSearch}>
             <input
               type="search"
-              placeholder="e.g. Heinz baked beans"
+              placeholder="e.g. banana or Heinz beans"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search foods"
               autoFocus
             />
-            <button className="btn primary" type="submit" aria-label="Search" disabled={search.loading}>
+            <button className="btn primary" type="submit" aria-label="Search">
               <SearchIcon />
             </button>
           </form>
-          {search.loading && <p className="hint center">Searching…</p>}
-          {search.error && <p className="notice">{search.error}</p>}
-          {search.results?.length === 0 && <p className="hint center">No results.</p>}
-          <div className="list">
-            {search.results?.map((f, i) => <FoodRow key={f.id + i} food={f} onClick={() => onPick(f)} />)}
-          </div>
+          {search && (
+            <>
+              {searchSection('Packaged products', search.off, 'No packaged products found.')}
+              {searchSection('Generic foods', search.usda, 'No generic foods found.')}
+            </>
+          )}
         </>
       )}
 

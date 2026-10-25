@@ -151,6 +151,15 @@ export function FoodSheet({
           .
         </p>
       )}
+      {food.source === 'usda' && (
+        <p className="hint">
+          Generic data from{' '}
+          <a href={`https://fdc.nal.usda.gov/food-details/${food.id.slice('usda:'.length)}/nutrients`} target="_blank" rel="noreferrer">
+            USDA FoodData Central
+          </a>
+          .
+        </p>
+      )}
     </Sheet>
   )
 }

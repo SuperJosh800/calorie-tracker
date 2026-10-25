@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { DEFAULT_SETTINGS, type Entry, type Food, type Settings } from '../types'
+import { USDA_SIGNUP_URL } from '../usda'
 
 export interface Backup {
   entries: Entry[]
@@ -19,7 +20,7 @@ export function SettingsView({
   onRestore: (b: Backup) => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const goals: [keyof Settings, string, string][] = [
+  const goals: [Exclude<keyof Settings, 'usdaApiKey'>, string, string][] = [
     ['calorieGoal', 'Calories', 'kcal'],
     ['proteinGoal', 'Protein', 'g'],
     ['carbsGoal', 'Carbohydrate', 'g'],
@@ -68,6 +69,29 @@ export function SettingsView({
       </section>
 
       <section className="card">
+        <h2 className="card-title">Food search</h2>
+        <p className="hint">
+          Generic foods (fruit, meat, rice…) come from USDA FoodData Central. Without a key, everyone shares a small
+          demo limit. Get a free personal key at{' '}
+          <a href={USDA_SIGNUP_URL} target="_blank" rel="noreferrer">
+            fdc.nal.usda.gov
+          </a>{' '}
+          (it arrives by email straight away) and paste it here for up to 1,000 searches an hour.
+        </p>
+        <label className="field">
+          <span>USDA API key (optional)</span>
+          <input
+            value={settings.usdaApiKey ?? ''}
+            onChange={(e) => onChange({ ...settings, usdaApiKey: e.target.value.trim() || undefined })}
+            placeholder="Paste your key"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck={false}
+          />
+        </label>
+      </section>
+
+      <section className="card">
         <h2 className="card-title">Your data</h2>
         <p className="hint">
           Everything is stored on this phone only. Export a backup now and then, or to move to a new phone.
@@ -101,7 +125,7 @@ export function SettingsView({
             Open Food Facts
           </a>
           , a free food database built by volunteers and available under the Open Database License. If a product is missing,
-          you can add it there with their app.
+          you can add it there with their app. Generic food data comes from USDA FoodData Central (public domain).
         </p>
       </section>
     </>

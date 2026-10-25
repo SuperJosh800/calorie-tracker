@@ -81,35 +81,21 @@ export async function lookupBarcode(code: string): Promise<Food | null> {
   return null
 }
 
-/** Text search. Open Food Facts search is sometimes overloaded, so callers should handle errors. */
-export async function searchFoods(query: string): Promise<Food[]> {
+/**
+ * Text search for packaged products. Open Food Facts' search is often overloaded (HTTP 503),
+ * so callers should treat failures as expected. (Their newer search.openfoodfacts.org server
+ * doesn't allow requests from other websites, so browsers can't use it.)
+ */
+export async function searchOpenFoodFacts(query: string): Promise<Food[]> {
   const q = encodeURIComponent(query.trim())
-  const attempts = [
-    async () => {
-      const res = await fetch(
-        `${API}/cgi/search.pl?search_terms=${q}&search_simple=1&action=process&json=1&page_size=25&fields=${FIELDS}`,
-        { signal: AbortSignal.timeout(12000) },
-      )
-      if (!res.ok) throw new Error(`Search returned ${res.status}`)
-      return ((await res.json()) as { products?: OffProduct[] }).products ?? []
-    },
-    async () => {
-      const res = await fetch(
-        `https://search.openfoodfacts.org/search?q=${q}&page_size=25&langs=en&fields=${FIELDS}`,
-        { signal: AbortSignal.timeout(12000) },
-      )
-      if (!res.ok) throw new Error(`Search returned ${res.status}`)
-      return ((await res.json()) as { hits?: OffProduct[] }).hits ?? []
-    },
-  ]
-  let lastError: unknown
-  for (const attempt of attempts) {
-    try {
-      const products = await attempt()
-      return products.filter((p) => p.product_name || p.product_name_en).map((p) => toFood(p))
-    } catch (e) {
-      lastError = e
-    }
-  }
-  throw lastError
+  const res = await fetch(
+    `${API}/cgi/search.pl?search_terms=${q}&search_simple=1&action=process&json=1&page_size=25&fields=${FIELDS}`,
+    { signal: AbortSignal.timeout(12000) },
+  )
+  if (!res.ok) throw new Error(`Open Food Facts search returned ${res.status}`)
+  const products = ((await res.json()) as { products?: OffProduct[] }).products ?? []
+  return products
+    .filter((p) => p.product_name || p.product_name_en)
+    .map((p) => toFood(p))
+    .filter(hasNutrition)
 }
