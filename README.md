@@ -7,6 +7,8 @@ works on both iPhone and Android with no app store needed.
 - **Full nutrients**: energy, fat, saturates, carbs, sugars, fibre, protein, salt, plus every vitamin and mineral
   on the label, with % of your daily target.
 - **Diary**: breakfast, lunch, dinner and snacks for each day, with a calorie ring and macro bars.
+- **Welcome setup**: the first time you open the app it asks your name, goal and a few details, then shows your
+  personal plan ("Nice goal, Josh! We'll help you get there.") and sets your daily goals.
 - **Goals**: choose an aim (lose weight, lose fat & build muscle, stay the same, or gain weight), log your weight
   in kg, stones & pounds or pounds, and see your maintenance calories and a daily target. Maintenance starts from
   the Mifflin-St Jeor formula; after two weeks of weigh-ins and food logging it is worked out from your own data.

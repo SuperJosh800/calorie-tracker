@@ -6,6 +6,7 @@ import { GoalsView } from './components/GoalsView'
 import { FoodSheet } from './components/FoodSheet'
 import { BookIcon, ChartIcon, ChevronLeft, ChevronRight, GearIcon, ScanIcon, TargetIcon } from './components/icons'
 import { NutrientsView } from './components/NutrientsView'
+import { Onboarding } from './components/Onboarding'
 import { SettingsView } from './components/SettingsView'
 import { dailyTargets } from './nutrients'
 import {
@@ -74,6 +75,26 @@ export default function App() {
     setSheet({ kind: 'food', food, meal })
   }
 
+  if (!profile.onboarded) {
+    const latest = [...weights].sort((a, b) => a.date.localeCompare(b.date)).at(-1)
+    return (
+      <div className="app">
+        <Onboarding
+          initialProfile={profile}
+          initialWeightKg={latest?.kg}
+          onFinish={(p, kg, goals) => {
+            const today = dateKey(new Date())
+            setProfile({ ...p, name: p.name?.trim() })
+            setWeights((list) => [...list.filter((w) => w.date !== today), { date: today, kg }])
+            setSettings({ ...settings, ...goals })
+            setTab('diary')
+          }}
+          onSkip={() => setProfile({ ...profile, onboarded: true })}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       <header className="topbar">
@@ -97,6 +118,7 @@ export default function App() {
       <main className="content">
         {tab === 'diary' && (
           <DiaryView
+            name={date === dateKey(new Date()) ? profile.name : undefined}
             entries={dayEntries}
             settings={settings}
             onAdd={(meal) => setSheet({ kind: 'add', meal, tab: 'scan' })}
@@ -120,6 +142,7 @@ export default function App() {
             settings={settings}
             onChange={setSettings}
             backup={{ entries, foods: myFoods, settings, profile, weights }}
+            onRestartSetup={() => setProfile({ ...profile, onboarded: false })}
             onRestore={(b) => {
               setEntries(b.entries)
               setMyFoods(b.foods)

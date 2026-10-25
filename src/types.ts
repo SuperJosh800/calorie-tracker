@@ -72,6 +72,9 @@ export type HeightUnit = 'cm' | 'ftin'
 
 /** What the user is aiming for and the details the calorie formula needs. */
 export interface Profile {
+  name?: string
+  /** Set once the first-run welcome setup is finished or skipped. */
+  onboarded?: boolean
   aim?: Aim
   /** Planned change in kg per week (positive number) when aiming to lose or gain weight. */
   ratePerWeekKg?: number

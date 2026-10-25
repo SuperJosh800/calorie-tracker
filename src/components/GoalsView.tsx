@@ -3,14 +3,15 @@ import {
   ACTIVITY_LEVELS,
   AIMS,
   ageOf,
+  DEFAULT_RATE,
   ESTIMATE_WINDOW_DAYS,
   estimateFromLogs,
   formulaMaintenance,
   KCAL_PER_KG,
+  planFor,
   RATES,
   RECOMP_DEFICIT,
-  suggestedMacros,
-  targetCalories,
+  round10,
 } from '../energy'
 import { entryNutrients, formatNumber } from '../nutrients'
 import { DEFAULT_SETTINGS, type Entry, type Profile, type Settings, type WeightEntry } from '../types'
@@ -18,8 +19,6 @@ import { formatRate, formatWeightChange } from '../units'
 import { dateKey } from '../util'
 import { HeightInput, WeightInput } from './MeasureInputs'
 import { WeightCard } from './WeightCard'
-
-const round10 = (n: number) => Math.round(n / 10) * 10
 
 export function GoalsView({
   profile,
@@ -55,10 +54,10 @@ export function GoalsView({
   // Ignore a log-based estimate that is clearly off, usually because meals weren't all logged.
   const logsUsable = fromLogs.ok && fromLogs.maintenance > 1000 && fromLogs.maintenance < 6000
   const maintenance = logsUsable && fromLogs.ok ? fromLogs.maintenance : formula
-  const target = maintenance && profile.aim ? targetCalories(profile, maintenance) : undefined
-  const macros = target && latestKg ? suggestedMacros(target.kcal, latestKg, profile.aim) : undefined
-  const recommended = target &&
-    macros && { calorieGoal: round10(target.kcal), proteinGoal: macros.protein, carbsGoal: macros.carbs, fatGoal: macros.fat }
+  const plan = maintenance && profile.aim && latestKg ? planFor(profile, latestKg, maintenance) : undefined
+  const target = plan?.target
+  const macros = plan?.macros
+  const recommended = plan?.goals
   const goalsMatch =
     recommended &&
     recommended.calorieGoal === settings.calorieGoal &&
@@ -90,10 +89,7 @@ export function GoalsView({
               aria-checked={profile.aim === a.id}
               className={profile.aim === a.id ? 'active' : ''}
               onClick={() =>
-                set({
-                  aim: a.id,
-                  ratePerWeekKg: a.id === 'lose' ? 0.5 : a.id === 'gain' ? 0.25 : undefined,
-                })
+set({ aim: a.id, ratePerWeekKg: DEFAULT_RATE[a.id] })
               }
             >
               {a.label}
@@ -113,7 +109,7 @@ export function GoalsView({
                   <option key={r} value={r}>
                     {formatRate(r, unit)} a week ({Math.round((r * KCAL_PER_KG) / 7)} kcal a day{' '}
                     {profile.aim === 'lose' ? 'less' : 'more'})
-                    {(profile.aim === 'lose' && r === 0.5) || (profile.aim === 'gain' && r === 0.25) ? ' – recommended' : ''}
+                    {r === DEFAULT_RATE[profile.aim!] ? ' – recommended' : ''}
                   </option>
                 ))}
               </select>
@@ -141,6 +137,10 @@ export function GoalsView({
       <section className="card">
         <h2 className="card-title">About you</h2>
         <p className="hint">Used to estimate how many calories your body burns. Stored only on this phone.</p>
+        <label className="field">
+          <span>Name</span>
+          <input value={profile.name ?? ''} onChange={(e) => set({ name: e.target.value || undefined })} autoComplete="given-name" />
+        </label>
         <div className="field-row">
           <label className="field">
             <span>Sex (for the formula)</span>
@@ -269,7 +269,8 @@ export function GoalsView({
 }
 
 function describeTarget(p: Profile, maintenance: number, kcal: number): string {
-  const diff = Math.round(Math.abs(maintenance - kcal) / 10) * 10
+  // Use the rounded figures shown on screen so the difference adds up.
+  const diff = Math.abs(round10(maintenance) - round10(kcal))
   if (p.aim === 'recomp') return `${diff} kcal (${RECOMP_DEFICIT * 100}%) below maintenance`
   if (p.aim === 'maintain' || diff === 0) return 'same as maintenance'
   return `${diff} kcal ${kcal < maintenance ? 'below' : 'above'} maintenance`

@@ -1090,3 +1090,227 @@ select:focus {
   width: 16px;
   height: 16px;
 }
+
+.greeting {
+  margin: 4px 4px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+/* Welcome setup */
+.onboarding {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+
+.onboarding-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 0 8px;
+}
+
+.progress {
+  flex: 1;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.onboarding-body {
+  flex: 1;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.onboarding-body h1 {
+  font-size: 1.6rem;
+  line-height: 1.2;
+  margin: 8px 0 4px;
+}
+
+.onboarding-body .hint {
+  margin: 0 0 4px;
+}
+
+.welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.welcome img {
+  border-radius: 22px;
+  box-shadow: 0 8px 24px rgb(22 163 74 / 0.3);
+  margin-bottom: 8px;
+}
+
+.welcome p {
+  margin: 0;
+  line-height: 1.5;
+  max-width: 340px;
+}
+
+.big-input {
+  min-height: 56px;
+  font-size: 1.2rem !important;
+}
+
+.option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-list button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.option-list button span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.option-list button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.unit-toggle {
+  display: inline-flex;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 2px;
+}
+
+.unit-toggle button {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.unit-toggle button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.onboarding-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 20px 20px;
+}
+
+.onboarding-footer .btn.wide {
+  margin: 0;
+  min-height: 52px;
+}
+
+.skip {
+  padding: 10px;
+  color: var(--muted);
+}
+
+.plan h1 {
+  font-size: 2rem;
+}
+
+.plan-lead {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.plan-card span {
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.plan-card strong {
+  font-size: 2.2rem;
+}
+
+.plan-card small {
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+.plan-macros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.plan-macros div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 4px;
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.plan-macros strong {
+  font-size: 1.2rem;
+}
+
+.plan-macros span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.plan-eta {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}

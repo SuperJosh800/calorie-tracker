@@ -58,12 +58,20 @@ export function Summary({ totals, settings }: { totals: Nutrients; settings: Set
   )
 }
 
+function greeting(name: string) {
+  const h = new Date().getHours()
+  return `Good ${h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'}, ${name}`
+}
+
 export function DiaryView({
+  name,
   entries,
   settings,
   onAdd,
   onOpenEntry,
 }: {
+  /** Shown as a greeting on today's diary. */
+  name?: string
   entries: Entry[]
   settings: Settings
   onAdd: (meal: Meal) => void
@@ -72,6 +80,7 @@ export function DiaryView({
   const totals = sumNutrients(entries.map(entryNutrients))
   return (
     <>
+      {name && <p className="greeting">{greeting(name)}</p>}
       <Summary totals={totals} settings={settings} />
       {MEALS.map((meal) => {
         const items = entries.filter((e) => e.meal === meal.id)

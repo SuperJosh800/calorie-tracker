@@ -33,6 +33,9 @@ export const RATES: Record<'lose' | 'gain', number[]> = {
   gain: [0.25, 0.5],
 }
 
+/** Pace picked when the user chooses an aim; also marked as recommended. */
+export const DEFAULT_RATE: Record<Aim, number | undefined> = { lose: 0.5, gain: 0.25, recomp: undefined, maintain: undefined }
+
 /** Below these, NHS guidance is to only diet with medical supervision. */
 export const MIN_CALORIES: Record<Sex, number> = { female: 1200, male: 1500 }
 
@@ -77,6 +80,19 @@ export function suggestedMacros(kcal: number, kg: number, aim: Aim | undefined) 
   const fat = Math.round((kcal * 0.3) / 9)
   const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4))
   return { protein, fat, carbs }
+}
+
+export const round10 = (n: number) => Math.round(n / 10) * 10
+
+/** Daily target, suggested macros and the matching diary goals for a maintenance estimate. */
+export function planFor(p: Profile, kg: number, maintenance: number) {
+  const target = targetCalories(p, maintenance)
+  const macros = suggestedMacros(target.kcal, kg, p.aim)
+  return {
+    target,
+    macros,
+    goals: { calorieGoal: round10(target.kcal), proteinGoal: macros.protein, carbsGoal: macros.carbs, fatGoal: macros.fat },
+  }
 }
 
 export function weeksToTarget(currentKg: number, p: Profile): number | undefined {

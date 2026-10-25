@@ -15,11 +15,13 @@ export function SettingsView({
   onChange,
   backup,
   onRestore,
+  onRestartSetup,
 }: {
   settings: Settings
   onChange: (s: Settings) => void
   backup: Backup
   onRestore: (b: Backup) => void
+  onRestartSetup: () => void
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const exportData = () => {
@@ -98,6 +100,14 @@ export function SettingsView({
             }}
           />
         </div>
+      </section>
+
+      <section className="card">
+        <h2 className="card-title">Welcome setup</h2>
+        <p className="hint">Go through the first-time questions again to set a new goal. Your diary and weigh-ins are kept.</p>
+        <button className="btn" onClick={onRestartSetup}>
+          Run the welcome setup again
+        </button>
       </section>
 
       <section className="card">
