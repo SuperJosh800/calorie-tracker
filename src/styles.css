@@ -1484,3 +1484,33 @@ select:focus {
 .segmented.range {
   margin-top: 10px;
 }
+
+/* Account */
+.welcome-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.welcome-links .skip:first-child {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.account-form .button-row {
+  margin-top: 4px;
+}
+
+.notice.error,
+.account-status.error {
+  color: var(--danger);
+}
+
+.notice.error {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.account-who {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}

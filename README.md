@@ -33,6 +33,8 @@ works on both iPhone and Android with no app store needed.
 - **Recent foods and your own foods**: add a product that isn't in the database by copying its label.
   It's remembered by barcode the next time you scan it.
 - **Private and offline**: your diary is stored only on your phone. Use **Settings → Export backup** to keep a copy.
+- **Accounts and sync (optional)**: sign in to your own server to keep the same diary on the app and the website.
+  See [server/README.md](server/README.md) to set one up on a Linux box with Tailscale.
 
 ## Put it on your phone
 

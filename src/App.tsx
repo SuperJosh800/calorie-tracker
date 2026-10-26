@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { AccountForm } from './components/AccountCard'
 import { AddFoodSheet, type AddTab } from './components/AddFoodSheet'
 import { CustomFoodForm } from './components/CustomFoodForm'
 import { DiaryView } from './components/DiaryView'
@@ -19,6 +20,7 @@ import { NutrientsView } from './components/NutrientsView'
 import { Onboarding } from './components/Onboarding'
 import { SettingsView } from './components/SettingsView'
 import { dailyTargets } from './nutrients'
+import { useSync } from './sync'
 import { useTheme } from './theme'
 import {
   DEFAULT_PROFILE,
@@ -50,6 +52,19 @@ export default function App() {
   const [date, setDate] = useState(() => dateKey(new Date()))
   const [tab, setTab] = useState<Tab>('diary')
   const [sheet, setSheet] = useState<SheetState | null>(null)
+  const [signingIn, setSigningIn] = useState(false)
+  const backup = useMemo(
+    () => ({ entries, foods: myFoods, settings: storedSettings, profile: storedProfile, weights }),
+    [entries, myFoods, storedSettings, storedProfile, weights],
+  )
+  const restore = (b: typeof backup) => {
+    setEntries(b.entries)
+    setMyFoods(b.foods)
+    setSettings(b.settings)
+    setProfile(b.profile)
+    setWeights(b.weights)
+  }
+  const sync = useSync(backup, restore)
 
   useEffect(() => {
     // Ask the browser not to evict our data when the phone is low on storage.
@@ -87,6 +102,25 @@ export default function App() {
     setSheet({ kind: 'food', food, meal })
   }
 
+  if (!profile.onboarded && signingIn) {
+    return (
+      <div className="app">
+        <div className="onboarding">
+          <header className="onboarding-top">
+            <button className="icon-btn" onClick={() => setSigningIn(false)} aria-label="Back">
+              <ChevronLeft />
+            </button>
+          </header>
+          <main className="onboarding-body">
+            <h1>Sign in</h1>
+            <p className="hint">Your diary and goals will come across from your server.</p>
+            <AccountForm sync={sync} onDone={() => setSigningIn(false)} />
+          </main>
+        </div>
+      </div>
+    )
+  }
+
   if (!profile.onboarded) {
     const latest = [...weights].sort((a, b) => a.date.localeCompare(b.date)).at(-1)
     return (
@@ -102,6 +136,7 @@ export default function App() {
             setTab('diary')
           }}
           onSkip={() => setProfile({ ...profile, onboarded: true })}
+          onSignIn={() => setSigningIn(true)}
         />
       </div>
     )
@@ -161,16 +196,11 @@ export default function App() {
             settings={settings}
             onChange={setSettings}
             backup={{ entries, foods: myFoods, settings, profile, weights }}
+            sync={sync}
             onRestartSetup={() => setProfile({ ...profile, onboarded: false })}
             theme={theme.choice}
             onThemeChange={theme.setChoice}
-            onRestore={(b) => {
-              setEntries(b.entries)
-              setMyFoods(b.foods)
-              setSettings(b.settings)
-              setProfile(b.profile)
-              setWeights(b.weights)
-            }}
+            onRestore={restore}
           />
         )}
       </main>

@@ -1,7 +1,9 @@
 import { Capacitor } from '@capacitor/core'
 import { useRef } from 'react'
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS, type Entry, type Food, type Profile, type Settings, type WeightEntry } from '../types'
+import type { Sync } from '../sync'
 import type { ThemeChoice } from '../theme'
+import { AccountCard } from './AccountCard'
 import { USDA_SIGNUP_URL } from '../usda'
 
 export interface Backup {
@@ -20,6 +22,7 @@ export function SettingsView({
   onRestartSetup,
   theme,
   onThemeChange,
+  sync,
 }: {
   settings: Settings
   onChange: (s: Settings) => void
@@ -28,6 +31,7 @@ export function SettingsView({
   onRestartSetup: () => void
   theme: ThemeChoice
   onThemeChange: (t: ThemeChoice) => void
+  sync: Sync
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const exportData = async () => {
@@ -66,6 +70,8 @@ export function SettingsView({
 
   return (
     <>
+      <AccountCard sync={sync} />
+
       <section className="card">
         <h2 className="card-title">Appearance</h2>
         <div className="segmented" role="radiogroup" aria-label="Theme">
@@ -111,7 +117,9 @@ export function SettingsView({
       <section className="card">
         <h2 className="card-title">Your data</h2>
         <p className="hint">
-          Everything is stored on this phone only. Export a backup now and then, or to move to a new phone.
+          {sync.email
+            ? 'Your data is stored on this phone and on your server. You can also export a copy as a file.'
+            : 'Everything is stored on this phone only. Export a backup now and then, or to move to a new phone.'}
         </p>
         <div className="button-row">
           <button className="btn" onClick={exportData}>

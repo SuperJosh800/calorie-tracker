@@ -14,6 +14,7 @@
     "@capacitor/filesystem": "^8.1.5",
     "@capacitor/share": "^8.0.3",
     "barcode-detector": "^3.2.3",
+    "pocketbase": "^0.28.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "zxing-wasm": "^3.1.6"

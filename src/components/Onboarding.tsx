@@ -27,11 +27,13 @@ export function Onboarding({
   initialWeightKg,
   onFinish,
   onSkip,
+  onSignIn,
 }: {
   initialProfile: Profile
   initialWeightKg?: number
   onFinish: (profile: Profile, weightKg: number, goals: Partial<Settings>) => void
   onSkip: () => void
+  onSignIn: () => void
 }) {
   const [step, setStep] = useState<Step>('welcome')
   const [p, setP] = useState<Profile>(initialProfile)
@@ -76,7 +78,7 @@ export function Onboarding({
             <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" width={96} height={96} />
             <h1>Welcome to Calorie Tracker</h1>
             <p>Scan barcodes, see every nutrient in your food, and get daily targets built around your goal.</p>
-            <p className="hint">It takes about a minute to set up. Everything stays on your phone.</p>
+            <p className="hint">It takes about a minute to set up. Everything stays on your phone unless you sign in to your own server.</p>
           </div>
         )}
 
@@ -280,9 +282,14 @@ export function Onboarding({
           </button>
         )}
         {step === 'welcome' && (
-          <button className="link skip" onClick={onSkip}>
-            Skip for now
-          </button>
+          <div className="welcome-links">
+            <button className="link skip" onClick={onSignIn}>
+              I already have an account
+            </button>
+            <button className="link skip" onClick={onSkip}>
+              Skip for now
+            </button>
+          </div>
         )}
       </footer>
     </div>
